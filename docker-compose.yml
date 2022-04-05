@@ -1,0 +1,134 @@
+# prueba  de botfront-stack
+#
+version: "3.8"
+
+networks:
+  private:
+  proxy:
+    external: true
+    name: traefik-public
+    
+ 
+volumes:
+  rasa_data:
+  rasa_actions_data:
+  db_data:
+  filebrowser_data:
+
+services:
+  rasa:
+    image: botfront/rasa-for-botfront:v2.3.3-bf.3
+    deploy:
+      placement:
+        constraints:
+          - node.role == worker
+      labels:
+        # The labels are useful for Traefik only
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        # Get the routes from http
+        - traefik.http.routers.rasa_${NAME}_router.rule=Host(`socket.${NAME}.saia.ar`)
+        - traefik.http.routers.rasa_${NAME}_router.entrypoints=http
+          # Redirect these routes to https
+        - traefik.http.middlewares.rasa_${NAME}_redirect-to-https.redirectscheme.scheme=https
+        - traefik.http.routers.rasa_${NAME}_router.middlewares=rasa_${NAME}_redirect-to-https@docker
+        # Get the routes from https
+        - traefik.http.routers.rasa_${NAME}_router-secured.rule=Host(`socket.${NAME}.saia.ar`)
+        - traefik.http.routers.rasa_${NAME}_router-secured.entrypoints=https
+        # Apply autentificiation with http challenge
+        - traefik.http.routers.rasa_${NAME}_router-secured.tls=true
+        - traefik.http.routers.rasa_${NAME}_router-secured.tls.certresolver=le
+        - traefik.http.services.rasa_${NAME}_service.loadbalancer.server.port=5005
+    networks:
+      - private
+      - proxy
+    volumes:
+      - rasa_data:/app/models
+    environment:
+      - BF_PROJECT_ID=${BF_PROJECT_ID-X5oK2rmS2GZTQ87Lk}
+      - BF_URL=http://botfront:3000/graphql
+      - AUGMENTATION_FACTOR=50
+      - MONGO_URL=mongodb://mongo:27017/bf
+      
+  botfront:
+    image: botfront/botfront:v1.0.6-patch.1
+    deploy:
+      placement:
+        constraints:
+          - node.role == worker
+      labels:
+        # The labels are useful for Traefik only
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        # Get the routes from http
+        - traefik.http.routers.${NAME}_router.rule=Host(`botfront.${NAME}.saia.ar`)
+        - traefik.http.routers.${NAME}_router.entrypoints=http
+          # Redirect these routes to https
+        - traefik.http.middlewares.${NAME}_redirect-to-https.redirectscheme.scheme=https
+        - traefik.http.routers.${NAME}_router.middlewares=${NAME}_redirect-to-https@docker
+        # Get the routes from https
+        - traefik.http.routers.${NAME}_router-secured.rule=Host(`botfront.${NAME}.saia.ar`)
+        - traefik.http.routers.${NAME}_router-secured.entrypoints=https
+        # Apply autentificiation with http challenge
+        - traefik.http.routers.${NAME}_router-secured.tls=true
+        - traefik.http.routers.${NAME}_router-secured.tls.certresolver=le
+        - traefik.http.services.${NAME}_service.loadbalancer.server.port=3000
+    networks:
+      - private
+      - proxy
+    #ports:
+     # - "${CODE-400}00:3000"
+    volumes:
+      - rasa_data:/app/models:ro
+    environment:
+      - PORT=3000
+      - ROOT_URL=https://botfront.${NAME}.saia.ar
+      - AUGMENTATION_FACTOR=50
+      - MONGO_URL=mongodb://mongo:27017/bf
+      
+  actions:
+    image: rasa/rasa-sdk:2.1.2
+    deploy:
+      placement:
+        constraints:
+          - node.role == worker
+    networks:
+      - private
+    volumes:
+      - rasa_actions_data:/app/actions
+    command:
+      - start
+      - --debug
+      - --actions
+      - actions
+    environment:
+      - BF_PROJECT_ID=${BF_PROJECT_ID-X5oK2rmS2GZTQ87Lk}
+      
+  duckling:
+
+    image: botfront/duckling
+    deploy:
+      placement:
+        constraints:
+          - node.role == worker
+    networks:
+      - private
+     
+  mongo:
+    image: mongo
+    deploy:
+      placement:
+        constraints:
+          - node.role == worker
+    networks:
+      - private
+    volumes:
+      - db_data:/data/db
+    environment:
+      - BF_PROJECT_ID=${BF_PROJECT_ID-X5oK2rmS2GZTQ87Lk}
+      - BF_URL=http://botfront:3000/graphql
+      - AUGMENTATION_FACTOR=50
+      - MONGO_URL=mongodb://mongo:27017/bf
+      
+
+
