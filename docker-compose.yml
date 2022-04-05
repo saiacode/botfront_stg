@@ -23,22 +23,17 @@ services:
         constraints:
           - node.role == worker
       labels:
-        # The labels are useful for Traefik only
         - traefik.enable=true
         - traefik.docker.network=traefik-public
-        # Get the routes from http
-        - traefik.http.routers.rasa_${NAME}_router.rule=Host(`socket.${NAME}.saia.ar`)
-        - traefik.http.routers.rasa_${NAME}_router.entrypoints=http
-          # Redirect these routes to https
-        - traefik.http.middlewares.rasa_${NAME}_redirect-to-https.redirectscheme.scheme=https
-        - traefik.http.routers.rasa_${NAME}_router.middlewares=rasa_${NAME}_redirect-to-https@docker
-        # Get the routes from https
-        - traefik.http.routers.rasa_${NAME}_router-secured.rule=Host(`socket.${NAME}.saia.ar`)
-        - traefik.http.routers.rasa_${NAME}_router-secured.entrypoints=https
-        # Apply autentificiation with http challenge
-        - traefik.http.routers.rasa_${NAME}_router-secured.tls=true
-        - traefik.http.routers.rasa_${NAME}_router-secured.tls.certresolver=le
-        - traefik.http.services.rasa_${NAME}_service.loadbalancer.server.port=5005
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.rasa_${NAME}-http.rule=Host(`socket.${NAME}.saia.ar`)
+        - traefik.http.routers.rasa_${NAME}-http.entrypoints=http
+        - traefik.http.routers.rasa_${NAME}-http.middlewares=https-redirect
+        - traefik.http.routers.rasa_${NAME}-https.rule=Host(`socket.${NAME}.saia.ar`)
+        - traefik.http.routers.rasa_${NAME}-https.entrypoints=https
+        - traefik.http.routers.rasa_${NAME}-https.tls=true
+        - traefik.http.routers.rasa_${NAME}-https.tls.certresolver=le
+        - traefik.http.services.rasa_${NAME}.loadbalancer.server.port=5005
     networks:
       - private
       - proxy
@@ -52,27 +47,23 @@ services:
       
   botfront:
     image: botfront/botfront:v1.0.6-patch.1
+    
     deploy:
       placement:
         constraints:
           - node.role == worker
       labels:
-        # The labels are useful for Traefik only
         - traefik.enable=true
         - traefik.docker.network=traefik-public
-        # Get the routes from http
-        - traefik.http.routers.${NAME}_router.rule=Host(`botfront.${NAME}.saia.ar`)
-        - traefik.http.routers.${NAME}_router.entrypoints=http
-          # Redirect these routes to https
-        - traefik.http.middlewares.${NAME}_redirect-to-https.redirectscheme.scheme=https
-        - traefik.http.routers.${NAME}_router.middlewares=${NAME}_redirect-to-https@docker
-        # Get the routes from https
-        - traefik.http.routers.${NAME}_router-secured.rule=Host(`botfront.${NAME}.saia.ar`)
-        - traefik.http.routers.${NAME}_router-secured.entrypoints=https
-        # Apply autentificiation with http challenge
-        - traefik.http.routers.${NAME}_router-secured.tls=true
-        - traefik.http.routers.${NAME}_router-secured.tls.certresolver=le
-        - traefik.http.services.${NAME}_service.loadbalancer.server.port=3000
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.${NAME}-http.rule=Host(`botfront.${NAME}.saia.ar`)
+        - traefik.http.routers.${NAME}-http.entrypoints=http
+        - traefik.http.routers.${NAME}-http.middlewares=https-redirect
+        - traefik.http.routers.${NAME}-https.rule=Host(`botfront.${NAME}.saia.ar`)
+        - traefik.http.routers.${NAME}-https.entrypoints=https
+        - traefik.http.routers.${NAME}-https.tls=true
+        - traefik.http.routers.${NAME}-https.tls.certresolver=le
+        - traefik.http.services.${NAME}.loadbalancer.server.port=3000
     networks:
       - private
       - proxy
