@@ -26,10 +26,10 @@ services:
         - traefik.enable=true
         - traefik.docker.network=traefik-public
         - traefik.constraint-label=traefik-public
-        - traefik.http.routers.rasa_${NAME}-http.rule=Host(`socket.${NAME}.saia.ar`)
+        - traefik.http.routers.rasa_${NAME}-http.rule=Host(`${SOCKET_URL}`)
         - traefik.http.routers.rasa_${NAME}-http.entrypoints=http
         - traefik.http.routers.rasa_${NAME}-http.middlewares=https-redirect
-        - traefik.http.routers.rasa_${NAME}-https.rule=Host(`socket.${NAME}.saia.ar`)
+        - traefik.http.routers.rasa_${NAME}-https.rule=Host(`${SOCKET_URL}`)
         - traefik.http.routers.rasa_${NAME}-https.entrypoints=https
         - traefik.http.routers.rasa_${NAME}-https.tls=true
         - traefik.http.routers.rasa_${NAME}-https.tls.certresolver=le
@@ -56,10 +56,10 @@ services:
         - traefik.enable=true
         - traefik.docker.network=traefik-public
         - traefik.constraint-label=traefik-public
-        - traefik.http.routers.${NAME}-http.rule=Host(`botfront.${NAME}.saia.ar`)
+        - traefik.http.routers.${NAME}-http.rule=Host(`${BF_URL}`)
         - traefik.http.routers.${NAME}-http.entrypoints=http
         - traefik.http.routers.${NAME}-http.middlewares=https-redirect
-        - traefik.http.routers.${NAME}-https.rule=Host(`botfront.${NAME}.saia.ar`)
+        - traefik.http.routers.${NAME}-https.rule=Host(`${BF_URL}`)
         - traefik.http.routers.${NAME}-https.entrypoints=https
         - traefik.http.routers.${NAME}-https.tls=true
         - traefik.http.routers.${NAME}-https.tls.certresolver=le
