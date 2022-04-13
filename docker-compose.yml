@@ -28,7 +28,7 @@ services:
           memory: 2000M
       placement:
         constraints:
-          - node.role == worker
+          - node.labels.botfront.ips == 1
       labels:
         - traefik.enable=true
         - traefik.docker.network=traefik-public
@@ -54,11 +54,10 @@ services:
       
   botfront:
     image: botfront/botfront:v1.0.6-patch.1
-    
     deploy:
       placement:
         constraints:
-          - node.role == worker
+          - node.labels.botfront.ips == 1
       labels:
         - traefik.enable=true
         - traefik.docker.network=traefik-public
