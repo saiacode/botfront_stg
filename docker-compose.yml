@@ -19,6 +19,13 @@ services:
   rasa:
     image: botfront/rasa-for-botfront:v2.3.3-bf.3
     deploy:
+      resources:
+        limits:
+          cpus: '0.9'
+          memory: 3000M
+        reservations:
+          cpus: '0.5'
+          memory: 2000M
       placement:
         constraints:
           - node.role == worker
